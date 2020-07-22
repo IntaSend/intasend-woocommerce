@@ -1,17 +1,25 @@
+function bindEvent(element, eventName, eventHandler) {
+    if (element.addEventListener) {
+        element.addEventListener(eventName, eventHandler, false);
+    } else if (element.attachEvent) {
+        element.attachEvent('on' + eventName, eventHandler);
+    }
+}
+
 var successCallback = function (data) {
+    alert("On sucess")
 
     var checkout_form = $('form.woocommerce-checkout');
     console.log("successCallback: checkout_form", checkout_form)
 
-    // // add a token to our hidden input field
-    // // console.log(data) to find the token
-    // checkout_form.find('#intasend_token').val(data.token);
+    // add a tracking to hidden input field
+    checkout_form.find('#intasend_tracking_id').val(data.tracking_id);
 
-    // // deactivate the paymentRequest function event
-    // checkout_form.off('checkout_place_order', paymentRequest);
+    // deactivate the paymentRequest function event
+    checkout_form.off('checkout_place_order', paymentRequest);
 
-    // // submit the form now
-    // checkout_form.submit();
+    // submit the form now
+    checkout_form.submit();
 
 };
 
@@ -62,8 +70,15 @@ var paymentRequest = function () {
         "email": email,
         "name": name
     })
-    return false;
 
+    bindEvent(window, 'message', function (e) {
+        if (e.data.message == 'tp-on-complete-event') {
+            return successCallback({
+                "tracking_id": "is-tracking-id-tracking_id"
+            })
+        }
+    });
+    return false;
 };
 
 jQuery(function ($) {

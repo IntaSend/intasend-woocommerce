@@ -167,15 +167,23 @@ function intasend_init_gateway_class()
 		 */
         public function validate_fields()
         {
-            // if (empty($_POST['billing_first_name'])) {
-            //     wc_add_notice('First name is required!', 'error');
-            //     return false;
-            // }
+            if (empty($_POST['billing_first_name'])) {
+                wc_add_notice('First name is required!', 'error');
+                return false;
+            }
+            if (empty($_POST['billing_email'])) {
+                wc_add_notice('Email is required!', 'error');
+                return false;
+            }
+            if (empty($_POST['billing_phone'])) {
+                wc_add_notice('Phone number is required!', 'error');
+                return false;
+            }
             return true;
         }
 
         /*
-		 * We're processing the payments here, everything about it is in Step 5
+		 * Check if payment is successful and complete transaction
 		 */
         public function process_payment($order_id)
         {
@@ -184,48 +192,65 @@ function intasend_init_gateway_class()
             // we need it to get any order detailes
             $order = wc_get_order($order_id);
 
+            $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
 
-            /*
-              * Array with parameters for API interaction
-             */
-            $args = array();
+            // we received the payment
+            $order->payment_complete();
+            $order->reduce_order_stock();
 
-            /*
-             * Your API interaction could be built with wp_remote_post()
-              */
-            $response = wp_remote_post('{payment processor endpoint}', $args);
+            // some notes to customer (replace true with false to make it private)
+            $order->add_order_note('Hey, your order is paid! Thank you!', true);
+
+            // Empty cart
+            $woocommerce->cart->empty_cart();
+
+            // Redirect to the thank you page
+            return array(
+                'result' => 'success',
+                'redirect' => $this->get_return_url($order)
+            );
+
+            // /*
+            //   * Array with parameters for API interaction
+            //  */
+            // $args = array();
+
+            // /*
+            //  * Your API interaction could be built with wp_remote_post()
+            //   */
+            // $response = wp_remote_post('{payment processor endpoint}', $args);
 
 
-            if (!is_wp_error($response)) {
+            // if (!is_wp_error($response)) {
 
-                $body = json_decode($response['body'], true);
+            //     $body = json_decode($response['body'], true);
 
-                // it could be different depending on your payment processor
-                if ($body['response']['responseCode'] == 'APPROVED') {
+            //     // it could be different depending on your payment processor
+            //     if ($body['response']['responseCode'] == 'APPROVED') {
 
-                    // we received the payment
-                    $order->payment_complete();
-                    $order->reduce_order_stock();
+            //         // we received the payment
+            //         $order->payment_complete();
+            //         $order->reduce_order_stock();
 
-                    // some notes to customer (replace true with false to make it private)
-                    $order->add_order_note('Hey, your order is paid! Thank you!', true);
+            //         // some notes to customer (replace true with false to make it private)
+            //         $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
-                    // Empty cart
-                    $woocommerce->cart->empty_cart();
+            //         // Empty cart
+            //         $woocommerce->cart->empty_cart();
 
-                    // Redirect to the thank you page
-                    return array(
-                        'result' => 'success',
-                        'redirect' => $this->get_return_url($order)
-                    );
-                } else {
-                    wc_add_notice('Please try again.', 'error');
-                    return;
-                }
-            } else {
-                wc_add_notice('Connection error.', 'error');
-                return;
-            }
+            //         // Redirect to the thank you page
+            //         return array(
+            //             'result' => 'success',
+            //             'redirect' => $this->get_return_url($order)
+            //         );
+            //     } else {
+            //         wc_add_notice('Please try again.', 'error');
+            //         return;
+            //     }
+            // } else {
+            //     wc_add_notice('Connection error.', 'error');
+            //     return;
+            // }
         }
 
         /*

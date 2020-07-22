@@ -120,7 +120,18 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            // 
+            echo wpautop( wp_kses_post("<img src='https://intasend.com/static/img/logo.cd2ba004a5ab.png' alt='intasend-payment'>"));
+            if ( $this->description ) {
+                // you can instructions for test mode, I mean test card numbers etc.
+                if ( $this->testmode ) {
+                    $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
+                    $this->description  = trim( $this->description );
+                }
+                // display the description with <p> tags etc.
+                echo wpautop( wp_kses_post( $this->description ) );
+            } else {
+                echo wpautop( wp_kses_post($this->description));
+            }
         }
 
         /*
@@ -193,6 +204,8 @@ function intasend_init_gateway_class()
             $order = wc_get_order($order_id);
 
             $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
+
+            print($_POST["intasend_tracking_id"]);
 
             // we received the payment
             $order->payment_complete();

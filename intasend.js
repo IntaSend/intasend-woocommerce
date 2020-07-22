@@ -7,9 +7,7 @@ function bindEvent(element, eventName, eventHandler) {
 }
 
 var successCallback = function (data) {
-    alert("On sucess")
-
-    var checkout_form = $('form.woocommerce-checkout');
+    var checkout_form = window.jqInstance('form.woocommerce-checkout');
     console.log("successCallback: checkout_form", checkout_form)
 
     // add a tracking to hidden input field
@@ -50,7 +48,7 @@ var paymentRequest = function () {
             }
         }
         if (amount) {
-            amount = parseInt(amount)
+            amount = parseFloat(amount.replace(/\D/g, ''))
         }
         console.log(amount)
 

@@ -227,74 +227,82 @@ function intasend_init_gateway_class()
                 return;
             }
 
-            // we need it to get any order detailes
-            $order = wc_get_order($order_id);
+            if (empty($_POST['intasend_tracking_id'])) {
+                wc_add_notice('Problem experienced while processing your request. Failed to obtain tracking id. Please contact support for assistance.', 'error');
+                return;
+            }
 
+            // Get order details
+            $order = wc_get_order($order_id);
             $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
 
-            // we received the payment
-            $order->payment_complete();
-            $order->reduce_order_stock();
-
-            // some notes to customer (replace true with false to make it private)
-            $api_ref = (string)$this->api_ref;
-            $order->add_order_note('Hey, your order is paid! Thank you!', true);
-            $order->add_order_note('IntaSend Invoice ref #233', false);
-            $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
-            $order->add_order_note('IntaSend Lookup ref', false);
-            $order->add_order_note('Payment Method - MPESA', false);
-            $order->add_order_note('Status - COMPLETED', false);
-
-            // Empty cart
-            $woocommerce->cart->empty_cart();
-
-            // Redirect to the thank you page
-            return array(
-                'result' => 'success',
-                'redirect' => $this->get_return_url($order)
+            /*
+              * Array with parameters for API interaction
+             */
+            $intasend_lookup_id = $_POST['intasend_lookup_id'];
+            $args = array(
+                'public_key' => $this->public_key,
+                'invoice_id' => $intasend_lookup_id
             );
 
-            // /*
-            //   * Array with parameters for API interaction
-            //  */
-            // $args = array();
+            /*
+             * Your API interaction could be built with wp_remote_post()
+              */
+            $url = "https://payment.intasend.com/api/v1/payment/status/";
+            if ($this->testmode) {
+                $url = "https://sandbox.intasend.com/api/v1/payment/status/";
+            }
+            $response = wp_remote_post('{payment processor endpoint}', $args);
 
-            // /*
-            //  * Your API interaction could be built with wp_remote_post()
-            //   */
-            // $response = wp_remote_post('{payment processor endpoint}', $args);
+            if (!is_wp_error($response)) {
 
+                $body = json_decode($response['body'], true);
+                $state = $body['response']['invoice']['state'];
+                $invoice = $body['response']['invoice']['id'];
+                $provider = $body['response']['invoice']['provider'];
+                $value = $body['response']['invoice']['value'];
+                $api_ref = $body['response']['invoice']['api_ref'];
 
-            // if (!is_wp_error($response)) {
+                if ($api_ref != $this->api_ref) {
+                    wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
+                    return;
+                }
 
-            //     $body = json_decode($response['body'], true);
+                if ($woocommerce->cart->total != $value) {
+                    wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                    return;
+                }
 
-            //     // it could be different depending on your payment processor
-            //     if ($body['response']['responseCode'] == 'APPROVED') {
+                if ($state == 'COMPLETE') {
+                    // we received the payment
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
 
-            //         // we received the payment
-            //         $order->payment_complete();
-            //         $order->reduce_order_stock();
+                    // some notes to customer (replace true with false to make it private)
+                    $api_ref = (string)$this->api_ref;
+                    $order->add_order_note('Hey, your order is paid! Thank you!', true);
+                    $order->add_order_note('IntaSend Invoice #'.$invoice, false);
+                    $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
+                    $order->add_order_note('IntaSend Lookup ref '.$intasend_lookup_id, false);
+                    $order->add_order_note('Payment Method - '.$provider, false);
+                    $order->add_order_note('Status - '.$state, false);
 
-            //         // some notes to customer (replace true with false to make it private)
-            //         $order->add_order_note('Hey, your order is paid! Thank you!', true);
+                    // Empty cart
+                    $woocommerce->cart->empty_cart();
 
-            //         // Empty cart
-            //         $woocommerce->cart->empty_cart();
-
-            //         // Redirect to the thank you page
-            //         return array(
-            //             'result' => 'success',
-            //             'redirect' => $this->get_return_url($order)
-            //         );
-            //     } else {
-            //         wc_add_notice('Please try again.', 'error');
-            //         return;
-            //     }
-            // } else {
-            //     wc_add_notice('Connection error.', 'error');
-            //     return;
-            // }
+                    // Redirect to the thank you page
+                    return array(
+                        'result' => 'success',
+                        'redirect' => $this->get_return_url($order)
+                    );
+                } else {
+                    wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
+                    return;
+                }
+            } else {
+                wc_add_notice('Connection error experienced while validating your payment. Please contact support.', 'error');
+                return;
+            }
         }
 
         /*

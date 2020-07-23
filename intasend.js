@@ -8,7 +8,6 @@ function bindEvent(element, eventName, eventHandler) {
 
 var successCallback = function (data) {
     var checkout_form = window.jqInstance('form.woocommerce-checkout');
-    console.log("successCallback: checkout_form", checkout_form)
 
     // add a tracking to hidden input field
     checkout_form.append("<input type='hidden' id='intasend_tracking_id' name='intasend_tracking_id' value='" + data.tracking_id + "'/>");
@@ -50,10 +49,12 @@ var paymentRequest = function () {
         name = first_name + " " + last_name
 
         if (phone_number) {
-            phone_number = phone_number.replace(/\s/g, '')
-            if (phone_number.toString().startsWith("0")) {
+            phone_number = phone_number.toString().replace(/\s/g, '')
+            if (phone_number.startsWith("0")) {
                 phone_number = phone_number.substr(1)
                 phone_number = "254" + phone_number
+            } else if (phone_number.startsWith("+")) {
+                phone_number = phone_number.substr(1)
             }
         }
         if (amount) {

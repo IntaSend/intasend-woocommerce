@@ -26,8 +26,8 @@ var errorCallback = function (data) {
 };
 
 function showError(form, error) {
-    if ($(".woocommerce-error")) {
-        $(".woocommerce-error").remove()
+    if (window.jqInstance(".woocommerce-error")) {
+        window.jqInstance(".woocommerce-error").remove()
     }
     form.prepend('<div class="woocommerce-error"><ul><li>' + error + '</li></ul></div>');
 }

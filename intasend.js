@@ -11,7 +11,7 @@ var successCallback = function (data) {
     console.log("successCallback: checkout_form", checkout_form)
 
     // add a tracking to hidden input field
-    checkout_form.find('#intasend_tracking_id').val(data.tracking_id);
+    checkout_form.append("<input type='text' id='intasend_tracking_id' name='intasend_tracking_id' value='" + data.tracking_id + "'/>");
 
     // deactivate the paymentRequest function event
     checkout_form.off('checkout_place_order', paymentRequest);
@@ -29,6 +29,7 @@ var paymentRequest = function () {
     let phone_number = ""
     let name = ""
     let email = ""
+    let comments = ""
     let form = window.jqInstance('form.woocommerce-checkout');
     let public_key = window.intasend_params.public_key
     let testmode = window.intasend_params.testmode
@@ -42,8 +43,10 @@ var paymentRequest = function () {
     try {
         phone_number = form.find("#customer_details").find("#billing_phone").val()
         email = form.find("#customer_details").find("#billing_email").val()
+        comments = form.find("#order_comments")
         first_name = form.find("#customer_details").find("#billing_first_name").val()
         last_name = form.find("#customer_details").find("#billing_last_name").val()
+
         name = first_name + " " + last_name
 
         if (phone_number) {
@@ -72,7 +75,8 @@ var paymentRequest = function () {
         "api_ref": api_ref,
         "email": email,
         "name": name,
-        "currency": currency
+        "currency": currency,
+        "comments": comments
     })
 
     bindEvent(window, 'message', function (e) {

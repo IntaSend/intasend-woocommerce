@@ -41,7 +41,7 @@ function intasend_init_gateway_class()
             $this->has_fields = true; // in case you need a custom form
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Collect M-Pesa and card payments payments using IntaSend Payment Gateway'; // will be displayed on the options page
-            $this->api_ref = uniqid("INTASEND_WCREF_", true); // For tracking and reconcilliation purposes
+            $this->api_ref = uniqid("INTASEND_WCREF_"); // For tracking and reconcilliation purposes
 
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
@@ -237,9 +237,10 @@ function intasend_init_gateway_class()
             $order->reduce_order_stock();
 
             // some notes to customer (replace true with false to make it private)
+            $api_ref = (string)$this->api_ref;
             $order->add_order_note('Hey, your order is paid! Thank you!', true);
             $order->add_order_note('IntaSend Invoice ref #233', false);
-            $order->add_order_node('IntaSend Tracking ref {$this->api_ref}', false);
+            $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
             $order->add_order_note('IntaSend Lookup ref', false);
             $order->add_order_note('Payment Method - MPESA', false);
             $order->add_order_note('Status - COMPLETED', false);

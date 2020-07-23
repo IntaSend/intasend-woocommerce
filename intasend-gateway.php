@@ -16,7 +16,7 @@
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');
 function intasend_add_gateway_class($gateways)
 {
-    $gateways[] = 'WC_IntaSend_Gateway'; // your class name is here
+    $gateways[] = 'WC_IntaSend_Gateway';
     return $gateways;
 }
 
@@ -121,7 +121,7 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop(wp_kses_post("<img src='https://intasend.com/static/img/logo.cd2ba004a5ab.png' alt='intasend-payment'>"));
+            echo wpautop(wp_kses_post("<img src='https://twigapay-web.s3.amazonaws.com/images/Intasend-PaymentBanner.original.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
@@ -131,6 +131,7 @@ function intasend_init_gateway_class()
             } else {
                 echo wpautop(wp_kses_post($this->description));
             }
+            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions</a>.</div>"));
         }
 
         /*
@@ -275,19 +276,19 @@ function intasend_init_gateway_class()
                     $invoice = $body['invoice']['id'];
                     $provider = $body['invoice']['provider'];
                     $value = $body['invoice']['value'];
-                    $api_ref = $_POST['api_ref'];
-                    $completed_time = $body['invoide']['created_at'];
+                    $api_ref = $body['invoice']['api_ref'];
+                    $completed_time = $body['invoice']['updated_at'];
 
                     $current_ref = $_POST['api_ref'];
                     if ($api_ref != $current_ref) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.' . $api_ref . ' != ' . $current_ref, 'error');
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
                         return;
                     }
 
-                    if ($woocommerce->cart->total != $value) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                        return;
-                    }
+                    // if ($woocommerce->cart->total != $value) {
+                    //     wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                    //     return;
+                    // }
 
                     if ($state == 'COMPLETE') {
                         // we received the payment
@@ -295,14 +296,8 @@ function intasend_init_gateway_class()
                         $order->reduce_order_stock();
 
                         // some notes to customer (replace true with false to make it private)
-                        $api_ref = (string)$this->api_ref;
                         $order->add_order_note('Hey, your order is paid! Thank you!', true);
-                        $order->add_order_note('IntaSend Invoice #' . $invoice, false);
-                        $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
-                        $order->add_order_note('IntaSend Lookup ref ' . $intasend_tracking_id, false);
-                        $order->add_order_note('Payment Method - ' . $provider, false);
-                        $order->add_order_note('Payment Made on - ' . $completed_time, false);
-                        $order->add_order_note('Status - ' . $state, false);
+                        $order->add_order_note('IntaSend Invoice #' . $invoice . ' with tracking ref # ' . $api_ref . '. ' . $provider . ' completed on ' . $completed_time, false);
 
                         // Empty cart
                         $woocommerce->cart->empty_cart();

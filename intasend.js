@@ -83,7 +83,7 @@ var paymentRequest = function () {
 
     bindEvent(window, 'message', function (e) {
         if (e.data.message.identitier === 'intasend-status-update-cdrtl') {
-            if (e.data.message.state === "COMPLETED") {
+            if (e.data.message.state === "COMPLETE") {
                 return successCallback({
                     "tracking_id": e.data.message.tracking_id
                 })

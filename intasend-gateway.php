@@ -264,8 +264,8 @@ function intasend_init_gateway_class()
                     $value = $body['response']['invoice']['value'];
                     $api_ref = $body['response']['invoice']['api_ref'];
 
-                    if ($api_ref != $this->api_ref) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
+                    if ($api_ref != (string)$this->api_ref) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support. xx'.$api_ref, 'error');
                         return;
                     }
 

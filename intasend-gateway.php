@@ -165,6 +165,10 @@ function intasend_init_gateway_class()
             // // let's suppose it is our payment processor JavaScript that allows to obtain a token
             wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.5/build/intasend-inline.js');
 
+            // Add validation support
+            wp_enqueue_script('jquery.validate', 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.2/dist/jquery.validate.min.js');
+
+
             // // and this is our custom JS in your plugin directory that works with token.js
             wp_register_script('woocommerce_intasend', plugins_url('intasend.js', __FILE__), array('jquery', 'intasend_js'));
 
@@ -187,7 +191,7 @@ function intasend_init_gateway_class()
         }
 
         /*
- 		 * Fields validation, more in Step 5
+ 		 * Fields validation
 		 */
         public function validate_fields()
         {
@@ -232,6 +236,11 @@ function intasend_init_gateway_class()
                 return;
             }
 
+            if (empty($_POST['api_ref'])) {
+                wc_add_notice('Problem experienced while processing your request. Failed to obtain api tracking reference. Please contact support for assistance.', 'error');
+                return;
+            }
+
             // Get order details
             $order = wc_get_order($order_id);
             $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
@@ -266,19 +275,19 @@ function intasend_init_gateway_class()
                     $invoice = $body['invoice']['id'];
                     $provider = $body['invoice']['provider'];
                     $value = $body['invoice']['value'];
-                    $api_ref = $body['invoice']['api_ref'];
+                    $api_ref = $_POST['api_ref'];
                     $completed_time = $body['invoide']['created_at'];
-                    
-                    $current_ref = (string)$this->api_ref;
+
+                    $current_ref = $_POST['api_ref'];
                     if ($api_ref != $current_ref) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.' . $api_ref.' != '.$current_ref, 'error');
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.' . $api_ref . ' != ' . $current_ref, 'error');
                         return;
                     }
 
-                    // if ($woocommerce->cart->total != $value) {
-                    //     wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                    //     return;
-                    // }
+                    if ($woocommerce->cart->total != $value) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                        return;
+                    }
 
                     if ($state == 'COMPLETE') {
                         // we received the payment

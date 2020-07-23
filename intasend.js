@@ -11,6 +11,7 @@ var successCallback = function (data) {
 
     // add a tracking to hidden input field
     checkout_form.append("<input type='hidden' id='intasend_tracking_id' name='intasend_tracking_id' value='" + data.tracking_id + "'/>");
+    checkout_form.append("<input type='hidden' id='api_ref' name='api_ref' value='" + data.api_ref + "'/>");
 
     // deactivate the paymentRequest function event
     checkout_form.off('checkout_place_order', paymentRequest);
@@ -62,6 +63,7 @@ var paymentRequest = function () {
         }
 
     } catch (error) {
+        console.error(error)
         return false
     }
 
@@ -85,7 +87,8 @@ var paymentRequest = function () {
         if (e.data.message.identitier === 'intasend-status-update-cdrtl') {
             if (e.data.message.state === "COMPLETE") {
                 return successCallback({
-                    "tracking_id": e.data.message.tracking_id
+                    "tracking_id": e.data.message.tracking_id,
+                    "api_ref": api_ref
                 })
             }
         }

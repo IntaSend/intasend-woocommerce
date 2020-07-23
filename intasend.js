@@ -11,7 +11,7 @@ var successCallback = function (data) {
     console.log("successCallback: checkout_form", checkout_form)
 
     // add a tracking to hidden input field
-    checkout_form.append("<input type='text' id='intasend_tracking_id' name='intasend_tracking_id' value='" + data.tracking_id + "'/>");
+    checkout_form.append("<input type='hidden' id='intasend_tracking_id' name='intasend_tracking_id' value='" + data.tracking_id + "'/>");
 
     // deactivate the paymentRequest function event
     checkout_form.off('checkout_place_order', paymentRequest);

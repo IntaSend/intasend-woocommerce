@@ -252,52 +252,58 @@ function intasend_init_gateway_class()
             if ($this->testmode) {
                 $url = "https://sandbox.intasend.com/api/v1/payment/status/";
             }
-            $response = wp_remote_post('{payment processor endpoint}', $args);
+            $response = wp_remote_post($url, $args);
 
             if (!is_wp_error($response)) {
+                try {
 
-                $body = json_decode($response['body'], true);
-                $state = $body['response']['invoice']['state'];
-                $invoice = $body['response']['invoice']['id'];
-                $provider = $body['response']['invoice']['provider'];
-                $value = $body['response']['invoice']['value'];
-                $api_ref = $body['response']['invoice']['api_ref'];
+                    $body = json_decode($response['body'], true);
+                    $state = $body['response']['invoice']['state'];
+                    $invoice = $body['response']['invoice']['id'];
+                    $provider = $body['response']['invoice']['provider'];
+                    $value = $body['response']['invoice']['value'];
+                    $api_ref = $body['response']['invoice']['api_ref'];
 
-                if ($api_ref != $this->api_ref) {
-                    wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
-                    return;
-                }
+                    if ($api_ref != $this->api_ref) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
+                        return;
+                    }
 
-                if ($woocommerce->cart->total != $value) {
-                    wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                    return;
-                }
+                    if ($woocommerce->cart->total != $value) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                        return;
+                    }
 
-                if ($state == 'COMPLETE') {
-                    // we received the payment
-                    $order->payment_complete();
-                    $order->reduce_order_stock();
+                    if ($state == 'COMPLETE') {
+                        // we received the payment
+                        $order->payment_complete();
+                        $order->reduce_order_stock();
 
-                    // some notes to customer (replace true with false to make it private)
-                    $api_ref = (string)$this->api_ref;
-                    $order->add_order_note('Hey, your order is paid! Thank you!', true);
-                    $order->add_order_note('IntaSend Invoice #'.$invoice, false);
-                    $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
-                    $order->add_order_note('IntaSend Lookup ref '.$intasend_lookup_id, false);
-                    $order->add_order_note('Payment Method - '.$provider, false);
-                    $order->add_order_note('Status - '.$state, false);
+                        // some notes to customer (replace true with false to make it private)
+                        $api_ref = (string)$this->api_ref;
+                        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+                        $order->add_order_note('IntaSend Invoice #' . $invoice, false);
+                        $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
+                        $order->add_order_note('IntaSend Lookup ref ' . $intasend_lookup_id, false);
+                        $order->add_order_note('Payment Method - ' . $provider, false);
+                        $order->add_order_note('Status - ' . $state, false);
 
-                    // Empty cart
-                    $woocommerce->cart->empty_cart();
+                        // Empty cart
+                        $woocommerce->cart->empty_cart();
 
-                    // Redirect to the thank you page
-                    return array(
-                        'result' => 'success',
-                        'redirect' => $this->get_return_url($order)
-                    );
-                } else {
-                    wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
-                    return;
+                        // Redirect to the thank you page
+                        return array(
+                            'result' => 'success',
+                            'redirect' => $this->get_return_url($order)
+                        );
+                    } else {
+                        wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
+                        return;
+                    }
+                } catch (Exception $e) {
+                    $error_message = $e->getMessage();
+                    $error_message = 'Problem experienced while validating your payment. Please contact support. Details: ' . $error_message;
+                    wc_add_notice($error_message, 'error');
                 }
             } else {
                 wc_add_notice('Connection error experienced while validating your payment. Please contact support.', 'error');

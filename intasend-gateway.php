@@ -41,6 +41,7 @@ function intasend_init_gateway_class()
             $this->has_fields = true; // in case you need a custom form
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Collect M-Pesa and card payments payments using IntaSend Payment Gateway'; // will be displayed on the options page
+            $this->api_ref = uniqid("INTASEND_WCREF_", true); // For tracking and reconcilliation purposes
 
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
@@ -120,17 +121,15 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop( wp_kses_post("<img src='https://intasend.com/static/img/logo.cd2ba004a5ab.png' alt='intasend-payment'>"));
-            if ( $this->description ) {
-                // you can instructions for test mode, I mean test card numbers etc.
-                if ( $this->testmode ) {
+            echo wpautop(wp_kses_post("<img src='https://intasend.com/static/img/logo.cd2ba004a5ab.png' alt='intasend-payment'>"));
+            if ($this->description) {
+                if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
-                    $this->description  = trim( $this->description );
+                    $this->description  = trim($this->description);
                 }
-                // display the description with <p> tags etc.
-                echo wpautop( wp_kses_post( $this->description ) );
+                echo wpautop(wp_kses_post($this->description));
             } else {
-                echo wpautop( wp_kses_post($this->description));
+                echo wpautop(wp_kses_post($this->description));
             }
         }
 
@@ -139,6 +138,8 @@ function intasend_init_gateway_class()
 		 */
         public function payment_scripts()
         {
+            global $woocommerce;
+
             // we need JavaScript to process a token only on cart/checkout pages, right?
             if (!is_cart() && !is_checkout() && !isset($_GET['pay_for_order'])) {
                 return;
@@ -151,11 +152,13 @@ function intasend_init_gateway_class()
 
             // no reason to enqueue JavaScript if API keys are not set
             if (empty($this->public_key)) {
+                wc_add_notice('This transaction will fail to process. IntaSend public key is required', 'error');
                 return;
             }
 
             // // do not work with card detailes without SSL unless your website is in a test mode
             if (!$this->testmode && !is_ssl()) {
+                wc_add_notice('This transaction will fail to process. SSL must be enabled to use IntaSend plugin. Enable testmode instead if you are in development mode.', 'error');
                 return;
             }
 
@@ -166,8 +169,18 @@ function intasend_init_gateway_class()
             wp_register_script('woocommerce_intasend', plugins_url('intasend.js', __FILE__), array('jquery', 'intasend_js'));
 
             // // in most payment processors you have to use PUBLIC KEY to obtain a token
+            $currency = "KES";
+            if (get_woocommerce_currency() == 'USD') {
+                $currency = "USD";
+            }
+
+
             wp_localize_script('woocommerce_intasend', 'intasend_params', array(
-                'public_key' => $this->public_key
+                'public_key' => $this->public_key,
+                'testmode' => $this->testmode,
+                'total' => $woocommerce->cart->total,
+                'currency' => $currency,
+                'api_ref' => $this->api_ref
             ));
 
             wp_enqueue_script('woocommerce_intasend');
@@ -200,12 +213,24 @@ function intasend_init_gateway_class()
         {
             global $woocommerce;
 
+            // Validate SSL
+            if (!$this->testmode && !is_ssl()) {
+                if (!$this->testmode && !is_ssl()) {
+                    wc_add_notice('Failed to place order. SSL must be enabled to use IntaSend plugin. Enable testmode instead if you are in development mode.', 'error');
+                    return;
+                }
+            }
+
+            // Ensure you have public key
+            if (empty($this->public_key)) {
+                wc_add_notice('This transaction will fail to process. IntaSend public key is required', 'error');
+                return;
+            }
+
             // we need it to get any order detailes
             $order = wc_get_order($order_id);
 
             $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
-
-            print($_POST["intasend_tracking_id"]);
 
             // we received the payment
             $order->payment_complete();
@@ -213,6 +238,11 @@ function intasend_init_gateway_class()
 
             // some notes to customer (replace true with false to make it private)
             $order->add_order_note('Hey, your order is paid! Thank you!', true);
+            $order->add_order_note('IntaSend Invoice ref #233', false);
+            $order->add_order_node('IntaSend Tracking ref {$this->api_ref}', false);
+            $order->add_order_note('IntaSend Lookup ref', false);
+            $order->add_order_note('Payment Method - MPESA', false);
+            $order->add_order_note('Status - COMPLETED', false);
 
             // Empty cart
             $woocommerce->cart->empty_cart();

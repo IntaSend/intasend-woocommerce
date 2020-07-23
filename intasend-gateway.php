@@ -239,10 +239,10 @@ function intasend_init_gateway_class()
             /*
               * Array with parameters for API interaction
              */
-            $intasend_lookup_id = $_POST['intasend_lookup_id'];
+            $intasend_tracking_id = $_POST['intasend_tracking_id'];
             $args = array(
                 'public_key' => $this->public_key,
-                'invoice_id' => $intasend_lookup_id
+                'invoice_id' => $intasend_tracking_id
             );
 
             /*
@@ -252,27 +252,33 @@ function intasend_init_gateway_class()
             if ($this->testmode) {
                 $url = "https://sandbox.intasend.com/api/v1/payment/status/";
             }
-            $response = wp_remote_post($url, $args);
+            $response = wp_remote_post($url, array(
+                'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
+                'body'        => json_encode($args),
+                'method'      => 'POST',
+                'data_format' => 'body'
+            ));
 
             if (!is_wp_error($response)) {
                 try {
-
                     $body = json_decode($response['body'], true);
-                    $state = $body['response']['invoice']['state'];
-                    $invoice = $body['response']['invoice']['id'];
-                    $provider = $body['response']['invoice']['provider'];
-                    $value = $body['response']['invoice']['value'];
-                    $api_ref = $body['response']['invoice']['api_ref'];
-
-                    if ($api_ref != (string)$this->api_ref) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support. xx'.$api_ref, 'error');
+                    $state = $body['invoice']['state'];
+                    $invoice = $body['invoice']['id'];
+                    $provider = $body['invoice']['provider'];
+                    $value = $body['invoice']['value'];
+                    $api_ref = $body['invoice']['api_ref'];
+                    $completed_time = $body['invoide']['created_at'];
+                    
+                    $current_ref = (string)$this->api_ref;
+                    if ($api_ref != $current_ref) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.' . $api_ref.' != '.$current_ref, 'error');
                         return;
                     }
 
-                    if ($woocommerce->cart->total != $value) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                        return;
-                    }
+                    // if ($woocommerce->cart->total != $value) {
+                    //     wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                    //     return;
+                    // }
 
                     if ($state == 'COMPLETE') {
                         // we received the payment
@@ -284,8 +290,9 @@ function intasend_init_gateway_class()
                         $order->add_order_note('Hey, your order is paid! Thank you!', true);
                         $order->add_order_note('IntaSend Invoice #' . $invoice, false);
                         $order->add_order_node('IntaSend Tracking ref ' . $api_ref, false);
-                        $order->add_order_note('IntaSend Lookup ref ' . $intasend_lookup_id, false);
+                        $order->add_order_note('IntaSend Lookup ref ' . $intasend_tracking_id, false);
                         $order->add_order_note('Payment Method - ' . $provider, false);
+                        $order->add_order_note('Payment Made on - ' . $completed_time, false);
                         $order->add_order_note('Status - ' . $state, false);
 
                         // Empty cart

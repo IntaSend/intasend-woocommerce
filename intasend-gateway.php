@@ -163,7 +163,7 @@ function intasend_init_gateway_class()
             }
 
             // // let's suppose it is our payment processor JavaScript that allows to obtain a token
-            wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.0/build/intasend-inline.js');
+            wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.2/build/intasend-inline.js');
 
             // // and this is our custom JS in your plugin directory that works with token.js
             wp_register_script('woocommerce_intasend', plugins_url('intasend.js', __FILE__), array('jquery', 'intasend_js'));

@@ -25,6 +25,13 @@ var errorCallback = function (data) {
     console.log(data);
 };
 
+function showError(form, error) {
+    if ($(".woocommerce-error")) {
+        $(".woocommerce-error").remove()
+    }
+    form.prepend('<div class="woocommerce-error"><ul><li>' + error + '</li></ul></div>');
+}
+
 var paymentRequest = function () {
     let phone_number = ""
     let name = ""
@@ -48,6 +55,23 @@ var paymentRequest = function () {
         last_name = form.find("#customer_details").find("#billing_last_name").val()
 
         name = first_name + " " + last_name
+
+        if (!phone_number) {
+            showError(form, "Phone number is required!")
+            return false
+        }
+        if (!email) {
+            showError(form, "Email is required!")
+            return false
+        }
+        if (!first_name) {
+            showError(form, "First name is required!")
+            return false
+        }
+        if (!last_name) {
+            showError(form, "Last name is required!")
+            return false
+        }
 
         if (phone_number) {
             phone_number = phone_number.toString().replace(/\s/g, '')

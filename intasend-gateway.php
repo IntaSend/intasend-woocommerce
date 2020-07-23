@@ -200,6 +200,10 @@ function intasend_init_gateway_class()
                 wc_add_notice('First name is required!', 'error');
                 return false;
             }
+            if (empty($_POST['billing_last_name'])) {
+                wc_add_notice('Last name is required!', 'error');
+                return false;
+            }
             if (empty($_POST['billing_email'])) {
                 wc_add_notice('Email is required!', 'error');
                 return false;
@@ -285,10 +289,10 @@ function intasend_init_gateway_class()
                         return;
                     }
 
-                    // if ($woocommerce->cart->total != $value) {
-                    //     wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                    //     return;
-                    // }
+                    if ($woocommerce->cart->total != $value) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                        return;
+                    }
 
                     if ($state == 'COMPLETE') {
                         // we received the payment

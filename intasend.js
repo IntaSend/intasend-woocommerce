@@ -80,11 +80,14 @@ var paymentRequest = function () {
         "comments": comments
     })
 
+
     bindEvent(window, 'message', function (e) {
-        if (e.data.message == 'tp-on-complete-event') {
-            return successCallback({
-                "tracking_id": "is-tracking-id-tracking_id"
-            })
+        if (e.data.message.identitier === 'intasend-status-update-cdrtl') {
+            if (e.data.message.state === "COMPLETED") {
+                return successCallback({
+                    "tracking_id": e.data.message.tracking_id
+                })
+            }
         }
     });
     return false;

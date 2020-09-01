@@ -48,11 +48,11 @@ var paymentRequest = function () {
         live = false
     }
     try {
-        phone_number = form.find("#customer_details").find("#billing_phone").val()
-        email = form.find("#customer_details").find("#billing_email").val()
+        phone_number = form.find("#billing_phone").val()
+        email = form.find("#billing_email").val()
         comments = form.find("#order_comments")
-        first_name = form.find("#customer_details").find("#billing_first_name").val()
-        last_name = form.find("#customer_details").find("#billing_last_name").val()
+        first_name = form.find("#billing_first_name").val()
+        last_name = form.find("#billing_last_name").val()
 
         name = first_name + " " + last_name
 

@@ -83,7 +83,7 @@ var paymentRequest = function () {
             }
         }
         if (amount) {
-            amount = parseFloat(amount.replace(/\D/g, ''))
+            amount = parseFloat(amount)
         }
 
     } catch (error) {
@@ -108,12 +108,16 @@ var paymentRequest = function () {
 
 
     bindEvent(window, 'message', function (e) {
-        if (e.data.message.identitier === 'intasend-status-update-cdrtl') {
-            if (e.data.message.state === "COMPLETE") {
-                return successCallback({
-                    "tracking_id": e.data.message.tracking_id,
-                    "api_ref": api_ref
-                })
+        if (e.data) {
+            if (e.data.message) {
+                if (e.data.message.identitier === 'intasend-status-update-cdrtl') {
+                    if (e.data.message.state === "COMPLETE") {
+                        return successCallback({
+                            "tracking_id": e.data.message.tracking_id,
+                            "api_ref": api_ref
+                        })
+                    }
+                }
             }
         }
     });

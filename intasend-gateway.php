@@ -164,7 +164,7 @@ function intasend_init_gateway_class()
             }
 
             // // let's suppose it is our payment processor JavaScript that allows to obtain a token
-            wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.5/build/intasend-inline.js');
+            wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.7/build/intasend-inline.js');
 
             // Add validation support
             wp_enqueue_script('jquery.validate', 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.2/dist/jquery.validate.min.js');

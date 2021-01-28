@@ -19,3 +19,7 @@ Please check our pricing here - https://intasend.com/collect-payments/
 ## How do I get support?
 
 Feel free to contact us through support@intasend.com and developers@intasend.com for both transaction queries and developers support respectively.
+
+## Screenshots
+
+![alt Intasend Wordpress Demo](assets/intasend-demo.png)

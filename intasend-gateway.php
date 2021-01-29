@@ -157,10 +157,10 @@ function intasend_init_gateway_class()
                 return;
             }
 
-            wp_enqueue_script('intasend_js', '/js/intasend-inline.js');
-            wp_enqueue_script('jquery.validate', '/js/jquery.validate.min.js');
+            wp_enqueue_script('intasend_js', '/js/plugins/intasend-inline.js');
+            wp_enqueue_script('jquery.validate', '/js/plugins/jquery.validate.min.js');
 
-            wp_register_script('woocommerce_intasend', plugins_url('intasend-build.js', __FILE__), array('jquery', 'intasend_js'));
+            wp_register_script('woocommerce_intasend', plugins_url('/js/intasend.js', __FILE__), array('jquery', 'intasend_js'));
 
             $currency = strtoupper(get_woocommerce_currency());
             if (!$currency) {
@@ -240,7 +240,9 @@ function intasend_init_gateway_class()
             /*
               * Array with parameters for API interaction
              */
-            $intasend_tracking_id = $_POST['intasend_tracking_id'];
+            $intasend_tracking_id = sanitize_text_field($_POST['intasend_tracking_id']);
+            update_post_meta($post->ID, 'intasend_tracking_id', $intasend_tracking_id);
+
             $args = array(
                 'public_key' => $this->public_key,
                 'invoice_id' => $intasend_tracking_id
@@ -270,7 +272,9 @@ function intasend_init_gateway_class()
                     $api_ref = $body['invoice']['api_ref'];
                     $completed_time = $body['invoice']['updated_at'];
 
-                    $current_ref = $_POST['api_ref'];
+                    $current_ref = sanitize_text_field($_POST['api_ref']);
+                    update_post_meta($post->ID, 'current_ref', $current_ref);
+
                     if ($api_ref != $current_ref) {
                         wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
                         return;

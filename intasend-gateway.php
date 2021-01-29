@@ -6,7 +6,7 @@
  * Author Name: Felix Cheruiyot
  * Author URI: https://github.com/felixcheruiyot
  * Description: Collect M-Pesa and card payments payments using IntaSend Payment Gateway
- * Version: 1.0.0
+ * Version: 1.1
  */
 
 

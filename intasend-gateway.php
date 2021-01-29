@@ -40,7 +40,7 @@ function intasend_init_gateway_class()
             $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
             $this->has_fields = true; // in case you need a custom form
             $this->method_title = 'IntaSend Gateway';
-            $this->method_description = 'Collect M-Pesa and card payments payments using IntaSend Payment Gateway'; // will be displayed on the options page
+            $this->method_description = 'Collect M-Pesa and Card Payments payments using IntaSend Payment Gateway'; // will be displayed on the options page
             $this->api_ref = uniqid("INTASEND_WCREF_"); // For tracking and reconcilliation purposes
 
             // gateways can support subscriptions, refunds, saved payment methods,
@@ -60,15 +60,9 @@ function intasend_init_gateway_class()
             $this->testmode = 'yes' === $this->get_option('testmode');
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
 
-            // This action hook saves the settings
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
-            // We need custom JavaScript to obtain a token
             add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
-
-            // You can also register a webhook here
-            // add_action( 'woocommerce_api_{webhook name}', array( $this, 'webhook' ) );
-
         }
 
         /**
@@ -121,7 +115,7 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop(wp_kses_post("<img src='https://twigapay-web.s3.amazonaws.com/images/Intasend-PaymentBanner.original.png' alt='intasend-payment'>"));
+            echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.original.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
@@ -163,22 +157,15 @@ function intasend_init_gateway_class()
                 return;
             }
 
-            // // let's suppose it is our payment processor JavaScript that allows to obtain a token
-            wp_enqueue_script('intasend_js', 'https://unpkg.com/intasend-inlinejs-sdk@2.0.7/build/intasend-inline.js');
+            wp_enqueue_script('intasend_js', '/js/intasend-inline.js');
+            wp_enqueue_script('jquery.validate', '/js/jquery.validate.min.js');
 
-            // Add validation support
-            wp_enqueue_script('jquery.validate', 'https://cdn.jsdelivr.net/npm/jquery-validation@1.19.2/dist/jquery.validate.min.js');
+            wp_register_script('woocommerce_intasend', plugins_url('intasend-build.js', __FILE__), array('jquery', 'intasend_js'));
 
-
-            // // and this is our custom JS in your plugin directory that works with token.js
-            wp_register_script('woocommerce_intasend', plugins_url('intasend.js', __FILE__), array('jquery', 'intasend_js'));
-
-            // // in most payment processors you have to use PUBLIC KEY to obtain a token
-            $currency = "KES";
-            if (get_woocommerce_currency() == 'USD') {
+            $currency = strtoupper(get_woocommerce_currency());
+            if (!$currency) {
                 $currency = "USD";
             }
-
 
             wp_localize_script('woocommerce_intasend', 'intasend_params', array(
                 'public_key' => $this->public_key,

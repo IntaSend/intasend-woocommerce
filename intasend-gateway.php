@@ -115,7 +115,7 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.original.png' alt='intasend-payment'>"));
+            echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';

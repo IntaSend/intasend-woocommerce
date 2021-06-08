@@ -65,7 +65,7 @@ function intasend_init_gateway_class()
                     'title'       => 'Title',
                     'type'        => 'text',
                     'description' => 'This controls the title which the user sees during checkout.',
-                    'default'     => 'Lipa na MPesa, Visa, and MasterCard (card payments)',
+                    'default'     => 'Lipa na MPesa, Visa, and MasterCard',
                     'desc_tip'    => true,
                 ),
                 'description' => array(
@@ -178,6 +178,7 @@ function intasend_init_gateway_class()
         public function complete_callback()
         {
             update_option('webhook_debug', $_GET);
+            $tracking_id = $_GET['tracking_id']
             $order = wc_get_order($_GET['id']);
             $order_id = $order->id;
 
@@ -187,7 +188,7 @@ function intasend_init_gateway_class()
             }
             $args = array(
                 'public_key' => $this->public_key,
-                'invoice_id' => $intasend_tracking_id
+                'invoice_id' => $tracking_id
             );
 
             $response = wp_remote_post($url, array(

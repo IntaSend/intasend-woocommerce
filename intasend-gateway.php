@@ -9,10 +9,6 @@
  * Version: 1.1
  */
 
-
-/*
- * This action hook registers our PHP class as a WooCommerce payment gateway
- */
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');
 function intasend_add_gateway_class($gateways)
 {
@@ -20,31 +16,22 @@ function intasend_add_gateway_class($gateways)
     return $gateways;
 }
 
-/*
- * The class itself, please note that it is inside plugins_loaded action hook
- */
 add_action('plugins_loaded', 'intasend_init_gateway_class');
 function intasend_init_gateway_class()
 {
 
     class WC_IntaSend_Gateway extends WC_Payment_Gateway
     {
-
-        /**
-         * Class constructor, more about it in Step 3
-         */
         public function __construct()
         {
 
-            $this->id = 'intasend'; // payment gateway plugin ID
-            $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
-            $this->has_fields = true; // in case you need a custom form
+            $this->id = 'intasend';
+            $this->icon = '';
+            $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
-            $this->method_description = 'Collect M-Pesa and Card Payments payments using IntaSend Payment Gateway'; // will be displayed on the options page
-            $this->api_ref = uniqid("INTASEND_WCREF_"); // For tracking and reconcilliation purposes
+            $this->method_description = 'Make secure payment (Card and mobile payments)';
+            $this->api_ref = uniqid("INTASEND_WCREF_");
 
-            // gateways can support subscriptions, refunds, saved payment methods,
-            // but in this tutorial we begin with simple payments
             $this->supports = array(
                 'products'
             );
@@ -61,13 +48,9 @@ function intasend_init_gateway_class()
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
 
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-
-            add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
+            add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));
         }
 
-        /**
-         * Plugin options, we deal with it in Step 3 too
-         */
         public function init_form_fields()
         {
             $this->form_fields = array(
@@ -129,56 +112,6 @@ function intasend_init_gateway_class()
         }
 
         /*
-		 * Custom CSS and JS, in most cases required only when you decided to go with a custom form
-		 */
-        public function payment_scripts()
-        {
-            global $woocommerce;
-
-            // we need JavaScript to process a token only on cart/checkout pages, right?
-            if (!is_cart() && !is_checkout() && !isset($_GET['pay_for_order'])) {
-                return;
-            }
-
-            // if our payment gateway is disabled, we do not have to enqueue JS too
-            if ('no' === $this->enabled) {
-                return;
-            }
-
-            // no reason to enqueue JavaScript if API keys are not set
-            if (empty($this->public_key)) {
-                wc_add_notice('This transaction will fail to process. IntaSend public key is required', 'error');
-                return;
-            }
-
-            // // do not work with card detailes without SSL unless your website is in a test mode
-            if (!$this->testmode && !is_ssl()) {
-                wc_add_notice('This transaction will fail to process. SSL must be enabled to use IntaSend plugin. Enable testmode instead if you are in development mode.', 'error');
-                return;
-            }
-
-            wp_enqueue_script('intasend_js', '/js/plugins/intasend-inline.js');
-            wp_enqueue_script('jquery.validate', '/js/plugins/jquery.validate.min.js');
-
-            wp_register_script('woocommerce_intasend', plugins_url('/js/intasend.js', __FILE__), array('jquery', 'intasend_js'));
-
-            $currency = strtoupper(get_woocommerce_currency());
-            if (!$currency) {
-                $currency = "USD";
-            }
-
-            wp_localize_script('woocommerce_intasend', 'intasend_params', array(
-                'public_key' => $this->public_key,
-                'testmode' => $this->testmode,
-                'total' => $woocommerce->cart->total,
-                'currency' => $currency,
-                'api_ref' => $this->api_ref
-            ));
-
-            wp_enqueue_script('woocommerce_intasend');
-        }
-
-        /*
  		 * Fields validation
 		 */
         public function validate_fields()
@@ -223,38 +156,40 @@ function intasend_init_gateway_class()
                 return;
             }
 
-            if (empty($_POST['intasend_tracking_id'])) {
-                wc_add_notice('Problem experienced while processing your request. Failed to obtain tracking id. Please contact support for assistance.', 'error');
-                return;
-            }
-
-            if (empty($_POST['api_ref'])) {
-                wc_add_notice('Problem experienced while processing your request. Failed to obtain api tracking reference. Please contact support for assistance.', 'error');
-                return;
-            }
-
             // Get order details
             $order = wc_get_order($order_id);
-            $order->update_status('on-hold', __('Validating payment status', 'wc-gateway-offline'));
+            $order->update_status('on-hold', __('Awaiting payment', 'wc-gateway-offline'));
 
-            /*
-              * Array with parameters for API interaction
-             */
-            $intasend_tracking_id = sanitize_text_field($_POST['intasend_tracking_id']);
-            update_post_meta($post->ID, 'intasend_tracking_id', $intasend_tracking_id);
+            $base_url = site_url();
+            $redirect_url = $base_url . "/wc-api/intasend?id=" . $order_id;
+            $amount = $woocommerce->cart->total;
+            $url = "https://websdk-sandbox.intasend.com/?api_ref=" . $order_id . "&redirect_url=" . $redirect_url . "&public_key=" . $this->public_key . "&amount=" . $amount;
+            return array(
+                'result' => 'success',
+                'redirect' => $url
+            );
+        }
 
+        public function redirect_to_site()
+        {
+            header("Location: " . site_url());
+        }
+
+        public function complete_callback()
+        {
+            update_option('webhook_debug', $_GET);
+            $order = wc_get_order($_GET['id']);
+            $order_id = $order->id;
+
+            $url = "https://payment.intasend.com/api/v1/payment/status/";
+            if ($this->testmode) {
+                $url = "https://sandbox.intasend.com/api/v1/payment/status/";
+            }
             $args = array(
                 'public_key' => $this->public_key,
                 'invoice_id' => $intasend_tracking_id
             );
 
-            /*
-             * Your API interaction could be built with wp_remote_post()
-              */
-            $url = "https://payment.intasend.com/api/v1/payment/status/";
-            if ($this->testmode) {
-                $url = "https://sandbox.intasend.com/api/v1/payment/status/";
-            }
             $response = wp_remote_post($url, array(
                 'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
                 'body'        => json_encode($args),
@@ -272,17 +207,16 @@ function intasend_init_gateway_class()
                     $api_ref = $body['invoice']['api_ref'];
                     $completed_time = $body['invoice']['updated_at'];
 
-                    $current_ref = sanitize_text_field($_POST['api_ref']);
-                    update_post_meta($post->ID, 'current_ref', $current_ref);
+                    update_post_meta($post->ID, 'current_ref', $order_id);
 
-                    if ($api_ref != $current_ref) {
+                    if ($api_ref != $order_id) {
                         wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
-                        return;
+                        $this->redirect_to_site();
                     }
 
                     if ($woocommerce->cart->total != $value) {
                         wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
-                        return;
+                        $this->redirect_to_site();
                     }
 
                     if ($state == 'COMPLETE') {
@@ -298,35 +232,21 @@ function intasend_init_gateway_class()
                         $woocommerce->cart->empty_cart();
 
                         // Redirect to the thank you page
-                        return array(
-                            'result' => 'success',
-                            'redirect' => $this->get_return_url($order)
-                        );
+                        header("Location: " . $this->get_return_url($order));
                     } else {
                         wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
-                        return;
+                        $this->redirect_to_site();
                     }
                 } catch (Exception $e) {
                     $error_message = $e->getMessage();
                     $error_message = 'Problem experienced while validating your payment. Please contact support. Details: ' . $error_message;
                     wc_add_notice($error_message, 'error');
+                    $this->redirect_to_site();
                 }
             } else {
                 wc_add_notice('Connection error experienced while validating your payment. Please contact support.', 'error');
-                return;
+                $this->redirect_to_site();
             }
-        }
-
-        /*
-		 * In case you need a webhook, like PayPal IPN etc
-		 */
-        public function webhook()
-        {
-            $order = wc_get_order($_GET['id']);
-            $order->payment_complete();
-            $order->reduce_order_stock();
-
-            update_option('webhook_debug', $_GET);
         }
     }
 }

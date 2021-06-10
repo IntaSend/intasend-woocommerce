@@ -48,7 +48,7 @@ function intasend_init_gateway_class()
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
 
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-			add_action('woocommerce_api_'.$this->id, array($this, 'complete_callback'));
+            add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));
         }
 
         public function init_form_fields()
@@ -101,7 +101,7 @@ function intasend_init_gateway_class()
             echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
-                    $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
+                    $this->description .= 'TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
                     $this->description  = trim($this->description);
                 }
                 echo wpautop(wp_kses_post($this->description));
@@ -161,22 +161,22 @@ function intasend_init_gateway_class()
             $order->update_status('on-hold', __('Awaiting payment', 'wc-gateway-offline'));
 
             $base_url = site_url();
-            $redirect_url = $base_url."/wc-api/intasend?ref_id=".$order_id;
-			
-			$args = array(
+            $redirect_url = $base_url . "/wc-api/intasend?ref_id=" . $order_id;
+
+            $args = array(
                 'public_key' => $this->public_key,
                 'api_ref' => $order_id,
-				'amount' => 10,// $woocommerce->cart->total,
-				'email' => 'wooclient@gmail.com',
-				'currency' => 'KES',
-				'redirect_url' => $redirect_url
+                'amount' => $woocommerce->cart->total,
+                'email' => 'wooclient@gmail.com',
+                'currency' => 'USD',
+                'redirect_url' => $redirect_url
             );
-			
-			$base_url = "https://payment.intasend.com";
+
+            $intasend_base_url = "https://payment.intasend.com";
             if ($this->testmode) {
-                $base_url = "https://sandbox.intasend.com";
+                $intasend_base_url = "https://sandbox.intasend.com";
             }
-			$request_url = $base_url."/api/v1/expresslinks/";
+            $request_url = $intasend_base_url . "/api/v1/expresslinks/";
             $response = wp_remote_post($request_url, array(
                 'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
                 'body'        => json_encode($args),
@@ -187,45 +187,38 @@ function intasend_init_gateway_class()
             if (!is_wp_error($response)) {
                 try {
                     $body = json_decode(wp_remote_retrieve_body($response), true);
-					error_log(print_r($body, true));
-                    $response_url = $base_url."/".$body['url'];
-					return array(
-						'result' => 'success',
-						'redirect' => $response_url
-					);
-					
-				}
-				catch (Exception $e) {
+                    error_log(print_r($body, true));
+                    $response_url = $intasend_base_url . "/" . $body['url'];
+                    return array(
+                        'result' => 'success',
+                        'redirect' => $response_url
+                    );
+                } catch (Exception $e) {
                     $error_message = $e->getMessage();
                     $error_message = 'Problem experienced while completing your payment.' . $error_message;
                     wc_add_notice($error_message, 'error');
-				}
-			}
-			/*$amount = $woocommerce->cart->total;
-            $url = "https://websdk-sandbox.intasend.com/?api_ref=".$order_id."&redirect_url=".$redirect_url."&public_key=".$this->public_key."&amount=".$amount;
-            return array(
-                'result' => 'success',
-                'redirect' => $url
-            );
-			*/
+                }
+            }
         }
-		
-		public function redirect_to_site()
-		{	
-			header("Location: ".site_url());
-		}
+
+        public function redirect_to_site()
+        {
+            header("Location: " . site_url());
+        }
 
         public function complete_callback()
         {
-			update_option('webhook_debug', $_GET);
+            update_option('webhook_debug', $_GET);
             $order = wc_get_order($_GET['ref_id']);
-			$tracking_id = $_GET['tracking_id'];
+            $tracking_id = $_GET['tracking_id'];
             $order_id = $order->id;
 
-            $url = "https://payment.intasend.com/api/v1/payment/status/";
+            $intasend_base_url = "https://payment.intasend.com";
             if ($this->testmode) {
-                $url = "https://sandbox.intasend.com/api/v1/payment/status/";
+                $intasend_base_url = "https://sandbox.intasend.com";
             }
+
+            $url = $intasend_base_url . "/api/v1/payment/status/";
             $args = array(
                 'public_key' => $this->public_key,
                 'invoice_id' => $tracking_id
@@ -273,20 +266,20 @@ function intasend_init_gateway_class()
                         $woocommerce->cart->empty_cart();
 
                         // Redirect to the thank you page
-						header("Location: ".$this->get_return_url($order));
+                        header("Location: " . $this->get_return_url($order));
                     } else {
                         wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
-						$this->redirect_to_site();
+                        $this->redirect_to_site();
                     }
                 } catch (Exception $e) {
                     $error_message = $e->getMessage();
                     $error_message = 'Problem experienced while validating your payment. Please contact support. Details: ' . $error_message;
                     wc_add_notice($error_message, 'error');
-					$this->redirect_to_site();
+                    $this->redirect_to_site();
                 }
             } else {
                 wc_add_notice('Connection error experienced while validating your payment. Please contact support.', 'error');
-				$this->redirect_to_site();
+                $this->redirect_to_site();
             }
         }
     }

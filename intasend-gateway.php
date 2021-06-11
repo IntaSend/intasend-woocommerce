@@ -101,7 +101,7 @@ function intasend_init_gateway_class()
             echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
-                    $this->description .= 'TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
+                    $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
                     $this->description  = trim($this->description);
                 }
                 echo wpautop(wp_kses_post($this->description));
@@ -166,9 +166,9 @@ function intasend_init_gateway_class()
             $args = array(
                 'public_key' => $this->public_key,
                 'api_ref' => $order_id,
-                'amount' => $woocommerce->cart->total,
+                'amount' => 11, //$woocommerce->cart->total,
                 'email' => 'wooclient@gmail.com',
-                'currency' => 'USD',
+                'currency' => 'KES',
                 'redirect_url' => $redirect_url
             );
 
@@ -208,7 +208,6 @@ function intasend_init_gateway_class()
 
         public function complete_callback()
         {
-            update_option('webhook_debug', $_GET);
             $order = wc_get_order($_GET['ref_id']);
             $tracking_id = $_GET['tracking_id'];
             $order_id = $order->id;
@@ -233,7 +232,7 @@ function intasend_init_gateway_class()
 
             if (!is_wp_error($response)) {
                 try {
-                    $body = json_decode($response['body'], true);
+                    $body = json_decode(wp_remote_retrieve_body($response), true);
                     $state = $body['invoice']['state'];
                     $invoice = $body['invoice']['id'];
                     $provider = $body['invoice']['provider'];
@@ -248,8 +247,8 @@ function intasend_init_gateway_class()
                         $this->redirect_to_site();
                     }
 
-                    if ($woocommerce->cart->total != $value) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
+                    if ($order->total != $value) {
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.' . $value . "-Cart" . $order->total, 'error');
                         $this->redirect_to_site();
                     }
 
@@ -263,9 +262,10 @@ function intasend_init_gateway_class()
                         $order->add_order_note('IntaSend Invoice #' . $invoice . ' with tracking ref # ' . $api_ref . '. ' . $provider . ' completed on ' . $completed_time, false);
 
                         // Empty cart
-                        $woocommerce->cart->empty_cart();
+                        WC()->cart->empty_cart();
 
                         // Redirect to the thank you page
+                        $thank_you_page = $this->get_return_url($order);
                         header("Location: " . $this->get_return_url($order));
                     } else {
                         wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');

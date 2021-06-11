@@ -163,11 +163,21 @@ function intasend_init_gateway_class()
             $base_url = site_url();
             $redirect_url = $base_url . "/wc-api/intasend?ref_id=" . $order_id;
 
+            // Add order collected fields as per the reference - https://woocommerce.wp-a2z.org/oik_class/wc_order/
             $args = array(
                 'public_key' => $this->public_key,
                 'api_ref' => $order_id,
-                'amount' => 11, //$woocommerce->cart->total,
-                'email' => 'wooclient@gmail.com',
+                'amount' => $order->total,
+                'email' => $order->get_billing_email(),
+                'phone_number' => $order->get_billing_phone(),
+                'first_name' => $order->get_billing_first_name(),
+                'last_name' => $order->get_billing_last_name(),
+                'country' => $order->get_billing_country(),
+                'city' => $order->get_billing_city(),
+                'zipcode' => $order->get_billing_postcode(),
+                'state' => $order->get_billing_state(),
+                'address' => $order->get_billing_address(),
+                'comment' => $order->get_customer_note(),
                 'currency' => 'KES',
                 'redirect_url' => $redirect_url
             );

@@ -6,7 +6,7 @@
  * Author Name: Felix Cheruiyot
  * Author URI: https://github.com/felixcheruiyot
  * Description: Collect M-Pesa and card payments payments using IntaSend Payment Gateway
- * Version: 1.1
+ * Version: 1.2
  */
 
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');

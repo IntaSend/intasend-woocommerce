@@ -26,7 +26,7 @@ function intasend_init_gateway_class()
         {
 
             $this->id = 'intasend';
-            $this->icon = '';
+            $this->icon = '/assets/images/IntaSend-icon.png';
             $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Make secure payment (Card and mobile payments)';
@@ -98,7 +98,7 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop(wp_kses_post("<img src='/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
+            echo wpautop(wp_kses_post("<img src='/assets/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';

@@ -16,6 +16,7 @@ function intasend_add_gateway_class($gateways)
     return $gateways;
 }
 
+
 add_action('plugins_loaded', 'intasend_init_gateway_class');
 function intasend_init_gateway_class()
 {
@@ -26,7 +27,7 @@ function intasend_init_gateway_class()
         {
 
             $this->id = 'intasend';
-            $this->icon = '/assets/images/IntaSend-icon.png';
+            $this->icon = plugin_dir_url(__FILE__) . '/assets/images/IntaSend-icon.png';
             $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Make secure payment (Card and mobile payments)';
@@ -65,7 +66,7 @@ function intasend_init_gateway_class()
                     'title'       => 'Title',
                     'type'        => 'text',
                     'description' => 'This controls the title which the user sees during checkout.',
-                    'default'     => 'Lipa na MPesa, Visa, and MasterCard (card payments)',
+                    'default'     => 'Lipa na MPesa, Visa, and MasterCard',
                     'desc_tip'    => true,
                 ),
                 'description' => array(
@@ -98,7 +99,9 @@ function intasend_init_gateway_class()
          */
         public function payment_fields()
         {
-            echo wpautop(wp_kses_post("<img src='/assets/images/Intasend-PaymentBanner.png' alt='intasend-payment'>"));
+            $plugin_path = plugin_dir_url(__FILE__);
+            $banner = $plugin_path . "/assets/images/Intasend-PaymentBanner.png";
+            echo wpautop(wp_kses_post("<img src=" . $banner . " alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
@@ -108,7 +111,7 @@ function intasend_init_gateway_class()
             } else {
                 echo wpautop(wp_kses_post($this->description));
             }
-            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions</a>.</div>"));
+            echo wpautop(wp_kses_post("<div>Secured by <a href='https://intasend.com' target='_blank'>IntaSend Solutions</a>.</div>"));
         }
 
         /*

@@ -190,7 +190,7 @@ function intasend_init_gateway_class()
             if ($this->testmode) {
                 $intasend_base_url = "https://sandbox.intasend.com";
             }
-            $request_url = $intasend_base_url . "/api/v1/expresslinks/";
+            $request_url = $intasend_base_url . "/api/v1/checkout/";
             $response = wp_remote_post($request_url, array(
                 'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
                 'body'        => json_encode($args),

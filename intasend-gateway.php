@@ -202,7 +202,7 @@ function intasend_init_gateway_class()
                 try {
                     $body = json_decode(wp_remote_retrieve_body($response), true);
                     error_log(print_r($body, true));
-                    $response_url = $intasend_base_url . "/" . $body['url'];
+                    $response_url = $body['url'];
                     return array(
                         'result' => 'success',
                         'redirect' => $response_url

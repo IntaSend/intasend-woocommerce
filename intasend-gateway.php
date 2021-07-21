@@ -27,7 +27,7 @@ function intasend_init_gateway_class()
         {
 
             $this->id = 'intasend';
-            $this->icon = plugin_dir_url(__FILE__) . '/assets/images/IntaSend-icon.png';
+            $this->icon = plugin_dir_url(__FILE__) . '/assets/images/checkoutButtonLight.png';
             $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Make secure payment (Card and mobile payments)';
@@ -66,14 +66,14 @@ function intasend_init_gateway_class()
                     'title'       => 'Title',
                     'type'        => 'text',
                     'description' => 'This controls the title which the user sees during checkout.',
-                    'default'     => 'Lipa na MPesa, Visa, and MasterCard',
+                    'default'     => 'Visa,MasterCard, and Mobile Payments',
                     'desc_tip'    => true,
                 ),
                 'description' => array(
                     'title'       => 'Description',
                     'type'        => 'textarea',
                     'description' => 'This controls the description which the user sees during checkout.',
-                    'default'     => 'Pay with MPesa or card securely using IntaSend Gateway.',
+                    'default'     => 'Make mobile or card payment securely using IntaSend Gateway.',
                 ),
                 'testmode' => array(
                     'title'       => 'Test mode',
@@ -100,7 +100,7 @@ function intasend_init_gateway_class()
         public function payment_fields()
         {
             $plugin_path = plugin_dir_url(__FILE__);
-            $banner = $plugin_path . "/assets/images/Intasend-PaymentBanner.png";
+            $banner = $plugin_path . "/assets/images/guranteedCheckoutWithMpesaLight.png";
             echo wpautop(wp_kses_post("<img src=" . $banner . " alt='intasend-payment'>"));
             if ($this->description) {
                 if ($this->testmode) {
@@ -166,6 +166,10 @@ function intasend_init_gateway_class()
             $base_url = site_url();
             $redirect_url = $base_url . "/wc-api/intasend?ref_id=" . $order_id;
 
+            $intasend_base_url = "https://payment.intasend.com";
+            if ($this->testmode) {
+                $intasend_base_url = "https://sandbox.intasend.com";
+            }
             // Add order collected fields as per the reference - https://woocommerce.wp-a2z.org/oik_class/wc_order/
             $currency = get_woocommerce_currency();
             $args = array(
@@ -183,13 +187,10 @@ function intasend_init_gateway_class()
                 'address' => $order->get_billing_address_1(),
                 'comment' => $order->get_customer_note(),
                 'currency' => $currency,
-                'redirect_url' => $redirect_url
+                'redirect_url' => $redirect_url,
+                'host' => $intasend_base_url
             );
 
-            $intasend_base_url = "https://payment.intasend.com";
-            if ($this->testmode) {
-                $intasend_base_url = "https://sandbox.intasend.com";
-            }
             $request_url = $intasend_base_url . "/api/v1/checkout/";
             $response = wp_remote_post($request_url, array(
                 'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
@@ -224,6 +225,8 @@ function intasend_init_gateway_class()
         {
             $order = wc_get_order($_GET['ref_id']);
             $tracking_id = $_GET['tracking_id'];
+            $signature = $_GET['signature'];
+            $checkout_id = $_GET['checkout_id'];
             $order_id = $order->id;
 
             $intasend_base_url = "https://payment.intasend.com";
@@ -233,8 +236,9 @@ function intasend_init_gateway_class()
 
             $url = $intasend_base_url . "/api/v1/payment/status/";
             $args = array(
-                'public_key' => $this->public_key,
-                'invoice_id' => $tracking_id
+                'invoice_id' => $tracking_id,
+                'signature' => $signature,
+                'checkout_id' => $checkout_id
             );
 
             $response = wp_remote_post($url, array(
@@ -257,12 +261,12 @@ function intasend_init_gateway_class()
                     update_post_meta($post->ID, 'current_ref', $order_id);
 
                     if ($api_ref != $order_id) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support.', 'error');
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match. Please contact support', 'error');
                         $this->redirect_to_site();
                     }
 
                     if ($order->total != $value) {
-                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.' . $value . "-Cart" . $order->total, 'error');
+                        wc_add_notice('Problem experienced while validating your payment. Validation items do not match on actual paid amount. Please contact support.', 'error');
                         $this->redirect_to_site();
                     }
 

@@ -217,7 +217,8 @@ function intasend_init_gateway_class()
 
         public function redirect_to_site()
         {
-            header("Location: " . site_url());
+            wp_redirect(site_url());
+            exit;
         }
 
         public function complete_callback()
@@ -283,7 +284,9 @@ function intasend_init_gateway_class()
 
                         // Redirect to the thank you page
                         $thank_you_page = $this->get_return_url($order);
-                        header("Location: " . $this->get_return_url($order));
+                        
+                        wp_redirect($thank_you_page);
+                        exit;
                     } else {
                         wc_add_notice('Problem experienced while validating your payment. Please contact support.', 'error');
                         $this->redirect_to_site();

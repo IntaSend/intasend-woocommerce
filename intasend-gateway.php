@@ -5,7 +5,7 @@
  * Plugin URI: https://intasend.com
  * Author Name: Felix Cheruiyot
  * Author URI: https://github.com/felixcheruiyot
- * Description: Collect M-Pesa and card payments payments using IntaSend Payment Gateway
+ * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway
  * Version: 1.2
  */
 
@@ -27,7 +27,7 @@ function intasend_init_gateway_class()
         {
 
             $this->id = 'intasend';
-            $this->icon = plugin_dir_url(__FILE__) . '/assets/images/checkoutButtonLight.png';
+            $this->icon = plugin_dir_url(__FILE__) . 'assets/images/IntaSend-icon.png';
             $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Make secure payment (Card and mobile payments)';
@@ -47,7 +47,6 @@ function intasend_init_gateway_class()
             $this->enabled = $this->get_option('enabled');
             $this->testmode = 'yes' === $this->get_option('testmode');
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
-
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));
         }
@@ -66,14 +65,14 @@ function intasend_init_gateway_class()
                     'title'       => 'Title',
                     'type'        => 'text',
                     'description' => 'This controls the title which the user sees during checkout.',
-                    'default'     => 'Visa,MasterCard, and Mobile Payments',
+                    'default'     => 'Pay with IntaSend',
                     'desc_tip'    => true,
                 ),
                 'description' => array(
                     'title'       => 'Description',
                     'type'        => 'textarea',
                     'description' => 'This controls the description which the user sees during checkout.',
-                    'default'     => 'Make mobile or card payment securely using IntaSend Gateway.',
+                    'default'     => 'Secure mobile and card payments.',
                 ),
                 'testmode' => array(
                     'title'       => 'Test mode',
@@ -100,18 +99,18 @@ function intasend_init_gateway_class()
         public function payment_fields()
         {
             $plugin_path = plugin_dir_url(__FILE__);
-            $banner = $plugin_path . "/assets/images/guranteedCheckoutWithMpesaLight.png";
-            echo wpautop(wp_kses_post("<img src=" . $banner . " alt='intasend-payment'>"));
+            $banner = $plugin_path . "assets/images/guranteedCheckoutWithMpesaLight.png";
+            echo wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>"));
             if ($this->description) {
                 if ($this->testmode) {
-                    $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.';
+                    $this->description .= '</p>TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.</p>';
                     $this->description  = trim($this->description);
                 }
                 echo wpautop(wp_kses_post($this->description));
             } else {
                 echo wpautop(wp_kses_post($this->description));
             }
-            echo wpautop(wp_kses_post("<div>Secured by <a href='https://intasend.com' target='_blank'>IntaSend Solutions</a>.</div>"));
+            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>"));
         }
 
         /*

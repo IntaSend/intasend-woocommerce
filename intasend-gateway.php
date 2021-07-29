@@ -46,6 +46,7 @@ function intasend_init_gateway_class()
             $this->description = $this->get_option('description');
             $this->enabled = $this->get_option('enabled');
             $this->testmode = 'yes' === $this->get_option('testmode');
+            $this->show_secured_by = 'yes' === $this->get_option('show_secured_by');
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));

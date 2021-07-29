@@ -3,9 +3,9 @@ Contributors: felixcheruiyot
 Donate link: https://intasend.com
 Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
 Requires at least: 4.8
-Tested up to: 5.6
+Tested up to: 5.8
 Requires PHP: 7.4
-Stable tag: 1.1
+Stable tag: 1.0.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,7 +26,7 @@ IntaSend enables businesses to get paid with mobile and card payments (Visa and 
 
 = How do it test before live publishing? =
 
-Generate test keys from the [sandbox](https://sandbox.intasend.com/account/api-keys/) and configure the plugin to be on test mode. Use the following [test cards](https://developers.intasend.com/sandbox-and-live-environments#test-card-numbers) for your test.
+Generate test keys from the [sandbox](https://sandbox.intasend.com/) and configure the plugin to be on test mode. Use the following [test cards](https://developers.intasend.com/sandbox-and-live-environments#test-card-numbers) for your test.
 
 = How much does it cost to use IntaSend? =
 
@@ -34,11 +34,7 @@ Please check our [pricing here](https://intasend.com/collect-payments/)
 
 = How do I get support? =
 
-Feel free to contact us through support@intasend.com and developers@intasend.com for both transaction queries and developers support respectively.
-
-== Screenshots ==
-1. Intasend Demo
-2. Branding - What the customer sees at checkout
+Feel free to contact us through https://support.intasend.com for both transaction queries and developers support respectively.
 
 == Changelog ==
 

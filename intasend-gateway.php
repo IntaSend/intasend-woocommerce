@@ -230,9 +230,9 @@ function intasend_init_gateway_class()
         {
 
             $ref_id = sanitize_text_field($_GET['ref_id']);
-            $tracking_id = sanitize_text_field($_POST['tracking_id']);
-            $signature = sanitize_text_field($_POST['signature']);
-            $checkout_id = sanitize_text_field($_POST['checkout_id']);
+            $tracking_id = sanitize_text_field($_GET['tracking_id']);
+            $signature = sanitize_text_field($_GET['signature']);
+            $checkout_id = sanitize_text_field($_GET['checkout_id']);
 
             if (empty($ref_id)) {
                 wc_add_notice('Problems experienced while confirming your order. Error details: Missing reference id. Please share with support for assistance.', 'error');

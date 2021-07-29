@@ -83,7 +83,7 @@ function intasend_init_gateway_class()
                     'desc_tip'    => true,
                 ),
                 'show_secured_by' => array(
-                    'title'       => 'Show secured by IntaSend link',
+                    'title'       => 'Show secured by IntaSend',
                     'label'       => 'Enable secured by IntaSend message',
                     'type'        => 'checkbox',
                     'description' => 'Show IntaSend secured by IntaSend message and link to site',

@@ -6,7 +6,7 @@
  * Author Name: Felix Cheruiyot (IntaSend Support)
  * Author URI: https://github.com/intasend
  * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');

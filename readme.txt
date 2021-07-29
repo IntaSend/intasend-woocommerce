@@ -5,7 +5,7 @@ Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
 Requires at least: 4.8
 Tested up to: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -38,15 +38,13 @@ Feel free to contact us through https://support.intasend.com for both transactio
 
 == Changelog ==
 
-= 1.1 =
-* Security fixes and inputs validations
-
-= 1.0 =
+= 1.0.0 =
+* Initial setup
 * Enabled sandbox and live support
 * Card and mobile payments
 * Default currency setup
 
 == Upgrade Notice ==
 
-= 1.1 =
-This version fixes a security related bug.  Upgrade immediately.
+= 1.0.1 =
+This version fixes a security related bug.

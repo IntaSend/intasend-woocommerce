@@ -100,17 +100,17 @@ function intasend_init_gateway_class()
         {
             $plugin_path = plugin_dir_url(__FILE__);
             $banner = $plugin_path . "assets/images/guranteedCheckoutWithMpesaLight.png";
-            echo esc_html(wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>")));
+            echo wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>"));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= '</p>TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.</p>';
                     $this->description  = trim($this->description);
                 }
-                echo esc_html(wpautop(wp_kses_post($this->description)));
+                echo wpautop(wp_kses_post($this->description));
             } else {
-                echo esc_html(wpautop(wp_kses_post($this->description)));
+                echo wpautop(wp_kses_post($this->description));
             }
-            echo esc_html(wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>")));
+            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>"));
         }
 
         /*

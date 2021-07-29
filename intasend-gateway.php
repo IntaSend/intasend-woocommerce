@@ -3,10 +3,10 @@
 /**
  * Plugin Name: IntaSend Payment for Woocomerce
  * Plugin URI: https://intasend.com
- * Author Name: Felix Cheruiyot
- * Author URI: https://github.com/felixcheruiyot
+ * Author Name: Felix Cheruiyot (IntaSend Support)
+ * Author URI: https://github.com/intasend
  * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway
- * Version: 1.2
+ * Version: 1.0.0
  */
 
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');
@@ -100,17 +100,17 @@ function intasend_init_gateway_class()
         {
             $plugin_path = plugin_dir_url(__FILE__);
             $banner = $plugin_path . "assets/images/guranteedCheckoutWithMpesaLight.png";
-            echo wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>"));
+            echo esc_html(wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>")));
             if ($this->description) {
                 if ($this->testmode) {
                     $this->description .= '</p>TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="https://developers.intasend.com/sandbox-and-live-environments#test-details-for-sandbox-environment" target="_blank" rel="noopener noreferrer">documentation</a>.</p>';
                     $this->description  = trim($this->description);
                 }
-                echo wpautop(wp_kses_post($this->description));
+                echo esc_html(wpautop(wp_kses_post($this->description)));
             } else {
-                echo wpautop(wp_kses_post($this->description));
+                echo esc_html(wpautop(wp_kses_post($this->description)));
             }
-            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>"));
+            echo esc_html(wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>")));
         }
 
         /*
@@ -118,19 +118,24 @@ function intasend_init_gateway_class()
 		 */
         public function validate_fields()
         {
-            if (empty($_POST['billing_first_name'])) {
+            $billing_first_name = sanitize_text_field($_POST['billing_first_name']);
+            $billing_last_name = sanitize_text_field($_POST['billing_last_name']);
+            $billing_email = sanitize_email($_POST['billing_email']);
+            $billing_phone = sanitize_text_field($_POST['billing_phone']);
+
+            if (empty($billing_first_name)) {
                 wc_add_notice('First name is required!', 'error');
                 return false;
             }
-            if (empty($_POST['billing_last_name'])) {
+            if (empty($billing_last_name)) {
                 wc_add_notice('Last name is required!', 'error');
                 return false;
             }
-            if (empty($_POST['billing_email'])) {
+            if (empty($billing_email)) {
                 wc_add_notice('Email is required!', 'error');
                 return false;
             }
-            if (empty($_POST['billing_phone'])) {
+            if (empty($billing_phone)) {
                 wc_add_notice('Phone number is required!', 'error');
                 return false;
             }
@@ -223,10 +228,32 @@ function intasend_init_gateway_class()
 
         public function complete_callback()
         {
-            $order = wc_get_order($_GET['ref_id']);
-            $tracking_id = $_GET['tracking_id'];
-            $signature = $_GET['signature'];
-            $checkout_id = $_GET['checkout_id'];
+
+            $ref_id = sanitize_text_field($_GET['ref_id']);
+            $tracking_id = sanitize_text_field($_POST['tracking_id']);
+            $signature = sanitize_text_field($_POST['signature']);
+            $checkout_id = sanitize_text_field($_POST['checkout_id']);
+
+            if (empty($ref_id)) {
+                wc_add_notice('Problems experienced while confirming your order. Error details: Missing reference id. Please share with support for assistance.', 'error');
+                return;
+            }
+            if (empty($tracking_id)) {
+                wc_add_notice('Problems experienced while confirming your order. Error details: Missing tracking id. Please share with support for assistance.', 'error');
+                return;
+            }
+            if (empty($signature)) {
+                wc_add_notice('Problems experienced while confirming your order. Error details: Missing signature. Please share with support for assistance.', 'error');
+                return;
+            }
+            if (empty($checkout_id)) {
+                wc_add_notice('Problems experienced while confirming your order. Error details: Missing checkout id. Please share with support for assistance.', 'error');
+                return;
+            }
+
+
+            $order = wc_get_order($ref_id);
+
             $order_id = $order->id;
 
             $intasend_base_url = "https://payment.intasend.com";
@@ -284,7 +311,7 @@ function intasend_init_gateway_class()
 
                         // Redirect to the thank you page
                         $thank_you_page = $this->get_return_url($order);
-                        
+
                         wp_safe_redirect($thank_you_page);
                         exit();
                     } else {

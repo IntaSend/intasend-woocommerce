@@ -1,4 +1,4 @@
-=== IntaSend Payment for Woocomerce === 
+=== IntaSend Payment - WooCommerce Plugin === 
 Contributors: felixcheruiyot
 Donate link: https://intasend.com
 Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
@@ -19,7 +19,7 @@ IntaSend enables businesses to get paid with mobile and card payments (Visa and 
 
 = How do I start using IntaSend for Payment Collection? =
 
-1. Add the plugin "IntaSend Payment for Woocomerce" to your site.
+1. Add the plugin "IntaSend Payment for WooCommerce" to your site.
 2. Create account at [IntaSend Payment Gateway](https://intasend.com) to get generate API keys.
 3. Add the API keys to your plugin under wp-admin.
 4. Publish and start accepting Card and Mobile payments.

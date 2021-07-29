@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name: IntaSend Payment for Woocomerce
+ * Plugin Name: IntaSend Payment - WooCommerce Plugin
  * Plugin URI: https://intasend.com
  * Author Name: Felix Cheruiyot (IntaSend Support)
  * Author URI: https://github.com/intasend

@@ -82,6 +82,14 @@ function intasend_init_gateway_class()
                     'default'     => 'yes',
                     'desc_tip'    => true,
                 ),
+                'show_secured_by' => array(
+                    'title'       => 'Show secured by IntaSend link',
+                    'label'       => 'Enable secured by IntaSend message',
+                    'type'        => 'checkbox',
+                    'description' => 'Show IntaSend secured by IntaSend message and link to site',
+                    'default'     => 'no',
+                    'desc_tip'    => true,
+                ),
                 'test_public_key' => array(
                     'title'       => 'Test Public Key',
                     'type'        => 'text'
@@ -94,7 +102,7 @@ function intasend_init_gateway_class()
         }
 
         /**
-         * You will need it if you want your custom form, Step 4 is about it
+         * Show banner and powered by message in place of fields
          */
         public function payment_fields()
         {
@@ -110,7 +118,9 @@ function intasend_init_gateway_class()
             } else {
                 echo wpautop(wp_kses_post($this->description));
             }
-            echo wpautop(wp_kses_post("<div>Powered by <a href='https://intasend.com' target='_blank'>IntaSend Solutions Payment Gateway</a>.</div>"));
+            if ($this->show_secured_by) {
+                echo wpautop(wp_kses_post("<div>Secured by <a href='https://intasend.com' target='_blank'>IntaSend</a>.</div>"));
+            }
         }
 
         /*

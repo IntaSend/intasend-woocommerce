@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Plugin Name: IntaSend Payment - WooCommerce Plugin
+ * Plugin Name: IntaSend Payment
  * Plugin URI: https://intasend.com
  * Author Name: Felix Cheruiyot (IntaSend Support)
  * Author URI: https://github.com/intasend
- * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway
+ * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway from your WooCommerce store
  * Version: 1.0.1
  */
 

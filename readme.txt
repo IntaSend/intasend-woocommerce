@@ -3,7 +3,7 @@ Contributors: felixcheruiyot
 Donate link: https://intasend.com
 Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
 Requires at least: 4.8
-Tested up to: 5.8
+Tested up to: 6.0
 Requires PHP: 7.4
 Stable tag: 1.0.1
 License: GPLv3

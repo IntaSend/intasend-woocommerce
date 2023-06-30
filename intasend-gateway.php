@@ -27,7 +27,7 @@ function intasend_init_gateway_class()
         {
 
             $this->id = 'intasend';
-            $this->icon = plugin_dir_url(__FILE__) . 'assets/images/IntaSend-icon.png';
+            // $this->icon = plugin_dir_url(__FILE__) . 'assets/images/IntaSend-icon.png';
             $this->has_fields = true;
             $this->method_title = 'IntaSend Gateway';
             $this->method_description = 'Make secure payment (Card and mobile payments)';
@@ -46,6 +46,7 @@ function intasend_init_gateway_class()
             $this->description = $this->get_option('description');
             $this->enabled = $this->get_option('enabled');
             $this->testmode = 'yes' === $this->get_option('testmode');
+            $this->trust_badge = 'yes' === $this->get_option('trust_badge');
             $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));
@@ -82,22 +83,14 @@ function intasend_init_gateway_class()
                     'default'     => 'yes',
                     'desc_tip'    => true,
                 ),
-                'card_badge' => array(
-                    'title'       => 'Card Badges',
-                    'label'       => 'Display badge with Card options only',
+                'trust_badge' => array(
+                    'title'       => 'Trust Badges',
+                    'label'       => 'Display trust badge with M-PESA and Card options',
                     'type'        => 'checkbox',
-                    'description' => 'Display trust badge with card options only.',
-                    'default'     => 'no',
-                    'desc_tip'    => false,
+                    'description' => 'This controls if the user can see the mpesa logo or not. Deactivate to show card options only.',
+                    'default'     => 'yes',
+                    // 'desc_tip'    => false,
                 ),
-                // 'card_mpesa_badge' => array(
-                //     'title'       => 'M-PESA and Card Badges',
-                //     'label'       => 'Display badge with Card and M-PESA options',
-                //     'type'        => 'checkbox',
-                //     'description' => 'Display trust badge with both card and M-PESA options.',
-                //     'default'     => 'yes',
-                //     'desc_tip'    => true,
-                // ),
                 'test_public_key' => array(
                     'title'       => 'Test Public Key',
                     'type'        => 'text'
@@ -115,11 +108,11 @@ function intasend_init_gateway_class()
         public function payment_fields()
         {
             $plugin_path = plugin_dir_url(__FILE__);
-            if($this->card_badge){
-                $banner = $plugin_path . "assets/images/badgeWithCardOnly";
-            }else {
-                $banner = $plugin_path . "assets/images/badgeWithCardnMpesa";
+            $banner = $plugin_path . "assets/images/badgeWithCardOnly.png";
+            if($this->trust_badge){
+                $banner = $plugin_path . "assets/images/badgeWithCardnMpesa.png";
             }
+
             echo wpautop(wp_kses_post("<div style='margin-bottom: 10px;'><img src=" . $banner . " alt='intasend-payment' style='max-height: 217px !important;'></div>"));
 
             if ($this->description) {

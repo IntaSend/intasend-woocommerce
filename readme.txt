@@ -3,9 +3,9 @@ Contributors: felixcheruiyot
 Donate link: https://intasend.com
 Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
 Requires at least: 4.8
-Tested up to: 6.0
+Tested up to: 6.5.5
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.`0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -48,3 +48,30 @@ Feel free to contact us through https://support.intasend.com for both transactio
 
 = 1.0.1 =
 This version fixes a security related bug.
+
+= 1.0.2 =
+
+= 1.0.3 =
+API keys validation
+Remove special characters from checkout fields
+
+
+= 1.0.4 =
+Tested for Wordpress 6.3.1
+Improved messaging
+
+
+= 1.0.5 =
+Tested for Wordpress 6.4.1
+Offline payment support
+
+= 1.0.6 =
+Tested for Wordpress 6.4.1
+Woocommerce blocks support
+
+= 1.0.7 =
+Tested for Wordpress 6.5.5
+PHP 8.2 Support
+
+= 1.0.11 = 
+Dynamic properties support

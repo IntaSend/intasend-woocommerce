@@ -1,0 +1,11 @@
+*** WooCommerce Extension Name Changelog ***
+
+2023-09-15 - version 1.0.2
+* Added - Public Keys Validation
+* Added - Checker for special characters to avoid errors
+
+YYYY-MM-DD - version 1.0.1
+* This version fixes a security related bug.
+
+YYYY-MM-DD - version 1.0.0
+* Initial release

@@ -6,14 +6,14 @@
  * Author Name: Felix Cheruiyot, Mugendi Gitonga (IntaSend Support)
  * Author URI: https://github.com/intasend
  * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway from your WooCommerce store
- * Version: 1.0.13
+ * Version: 1.0.19
  * Requires Plugins: woocommerce
  * Requires at least: 6.0
- * Tested up to: 6.7
+ * Tested up to: 6.7.1
  * Requires PHP: 7.4
- * Requires Plugins: woocommerce
- * WC requires at least: 6.9
- * WC tested up to: 9.4.2
+ * WC requires at least: 8.0
+ * WC tested up to: 9.4.3
+ * WC High-Performance Order Storage: yes
  */
 
 
@@ -22,13 +22,23 @@ define( 'WC_INTASEND_MAIN_FILE', __FILE__ );
 add_filter('woocommerce_payment_gateways', 'intasend_add_gateway_class');
 function intasend_add_gateway_class($gateways)
 {
+    
     $gateways[] = 'WC_IntaSend_Gateway';
     return $gateways;
 }
 
+add_action('before_woocommerce_init', function () {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+    }
+});
 
-add_action('plugins_loaded', 'intasend_init_gateway_class');
+function INTASEND_WOO_scripts () {
+    wp_register_script( 'INTASEND-WOO-inline', plugin_dir_url( __FILE__ ) . 'assets/js/intasend-inline-min.js', array( 'jquery' ));
+    wp_enqueue_script('INTASEND-WOO-inline');
+}
 
+add_action('plugins_loaded', 'intasend_init_gateway_class', 10);
 add_action( 'woocommerce_blocks_loaded', 'woocommerce_gateway_intasend_woocommerce_block_support' );
 
 function woocommerce_gateway_intasend_woocommerce_block_support() {
@@ -46,6 +56,7 @@ function woocommerce_gateway_intasend_woocommerce_block_support() {
 		);
 	}
 }
+
 
 function intasend_init_gateway_class()
 {
@@ -77,9 +88,12 @@ function intasend_init_gateway_class()
                 $this->testmode = 'yes' === $this->get_option('testmode');
                 $this->trust_badge = 'yes' === $this->get_option('trust_badge');
                 $this->public_key = $this->testmode ? $this->get_option('test_public_key') : $this->get_option('live_public_key');
+                $this->payment_type = $this->get_option( 'payment_type', 'redirect' );
                 add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
                 add_action('woocommerce_api_' . $this->id, array($this, 'complete_callback'));
                 add_action('woocommerce_api_intasend_webhook', array($this, 'webhook_handler'));
+                add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page'));
+                add_action( 'wp_enqueue_scripts', 'INTASEND_WOO_scripts' );
                 $this->check_for_keys();
             }
 
@@ -136,7 +150,19 @@ function intasend_init_gateway_class()
                     'live_public_key' => array(
                         'title'       => 'Live Public Key',
                         'type'        => 'text',
-                    )
+                    ),
+                    'payment_type'    => array(
+                        'title'       => 'Payment Option',
+                        'type'        => 'select',
+                        'description' => 'Popup will display payment popup on the page while Redirect will redirect the customer to make payment.',
+                        'default'     => 'redirect',
+                        'desc_tip'    => false,
+                        'options'     => array(
+                            ''          => 'Select',
+                            'inline'    => 'Popup',
+                            'redirect'  => 'Redirect',
+                        ),
+                    ),
                 );
             }
 
@@ -228,7 +254,7 @@ function intasend_init_gateway_class()
 
                 // Get order details
                 $order = wc_get_order($order_id);
-                $order->update_status('on-hold', __('Awaiting payment', 'wc-gateway-offline'));
+                $order->update_status('pending', __('Awaiting payment', 'wc-gateway-offline'));
 
                 $billing_first_name = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_first_name());
                 $billing_last_name = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_last_name());
@@ -246,27 +272,17 @@ function intasend_init_gateway_class()
                 $base_url = site_url();
                 $redirect_url = $base_url . "/wc-api/intasend?ref_id=" . $order_id;
 
-                $intasend_base_url = "https://payment.intasend.com";
-                if ($this->testmode) {
-                    $intasend_base_url = "https://sandbox.intasend.com";
-                }
+                $intasend_base_url = "https://sandbox.intasend.com";
+				if(!$this->testmode){
+					$intasend_base_url = "https://payment.intasend.com";
+				}
+                
                 // Add order collected fields as per the reference - https://woocommerce.wp-a2z.org/oik_class/wc_order/
                 $currency = get_woocommerce_currency();
                 $args = array(
                     'public_key' => $this->public_key,
                     'api_ref' => $order_id,
                     'amount' => $this->get_order_total(),
-                    // 'email' => $order->get_billing_email(),
-                    // 'phone_number' => $order->get_billing_phone(),
-                    // 'first_name' => $order->get_billing_first_name(),
-                    // 'last_name' => $order->get_billing_last_name(),
-                    // 'country' => $order->get_billing_country(),
-                    // 'city' => $order->get_billing_city(),
-                    // 'zipcode' => $order->get_billing_postcode(),
-                    // 'state' => $order->get_billing_state(),
-                    // 'address' => $order->get_billing_address_1(),
-                    // 'comment' => $order->get_customer_note(),
-
                     'email' => $order->get_billing_email(),
                     'phone_number' => $billing_phone,
                     'first_name' => $billing_first_name,
@@ -281,7 +297,8 @@ function intasend_init_gateway_class()
                     'currency' => $currency,
                     'redirect_url' => $redirect_url,
                     'callback_url' => $redirect_url,
-                    'host' => $base_url
+                    'host' => $base_url,
+                    'test_mode' => $testmode
                 );
 
                 $request_url = $intasend_base_url . "/api/v1/checkout/";
@@ -296,12 +313,20 @@ function intasend_init_gateway_class()
                     try {
                         $body = json_decode(wp_remote_retrieve_body($response), true);
                         $response_url = $body['url'];
+                        
 
                         $order->add_order_note('IntaSend Payment URL, ' . $response_url, false);
 
+                        if ( 'redirect' === $this->payment_type ) {
+                            return array(
+                                'result' => 'success',
+                                'redirect' => $response_url,
+                            );
+                        }
+
                         return array(
                             'result' => 'success',
-                            'redirect' => $response_url
+                            'redirect' => $order->get_checkout_payment_url(true),
                         );
                     } catch (Exception $e) {
                         $error_message = $e->getMessage();
@@ -315,6 +340,89 @@ function intasend_init_gateway_class()
             {
                 wp_safe_redirect(site_url());
                 exit();
+            }
+
+            public function receipt_page( $order_id ) {
+                
+                $order = wc_get_order( $order_id );
+                if (!$order) {
+                    echo '<p>Invalid order.</p>';
+                    return;
+                }
+
+                $billing_first_name = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_first_name());
+                $billing_last_name = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_last_name());
+                $billing_phone = preg_replace("/[^+0-9 ]/", '', $order->get_billing_phone());
+                $billing_company = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_company());
+                $billing_address_1 = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_address_1());
+                $billing_address_2 = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_address_2());
+                $billing_city = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_city());
+                $billing_postcode = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_postcode());
+                $billing_country = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_country());
+                $billing_state = preg_replace("/[^A-Za-z0-9 ]/", '', $order->get_billing_state());
+
+                $base_url = site_url();
+                $redirect_url = $base_url . "/wc-api/intasend?ref_id=" . $order_id;
+
+                
+                echo'<div class="intasend-pay">
+                <button class="intaSendPayButton"
+                        data-first_name="' . esc_attr($billing_first_name) . '"
+                        data-last_name="' . esc_attr($billing_last_name) . '"
+                        data-email="' . esc_attr($order->get_billing_email()) . '"
+                        data-api_ref="' . esc_attr($order_id) . '"
+                        data-amount="' . esc_attr($order->get_total()) . '"
+                        data-phone_number="' . esc_attr($billing_phone) . '"
+                        data-country="' . esc_attr($billing_country) . '"
+                        data-city="' . esc_attr($billing_city) . '"
+                        data-zipcode="' . esc_attr($billing_postcode) . '"
+                        data-state="' . esc_attr($billing_state) . '"
+                        data-address="' . esc_attr($billing_address_1) . '"
+                        data-currency="' . esc_attr($order->get_currency()) . '"
+                        data-channel="WOOCOMMERCE"
+                        data-host="' . esc_url($base_url) . '"
+                        data-redirect_url="' . esc_url($redirect_url) . '">Pay Now</button>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+
+                        const buttons = document.querySelectorAll(".intaSendPayButton");
+                        if (buttons.length > 1) {
+                            for (let i = 1; i < buttons.length; i++) {
+                                buttons[i].remove(); // Remove all but the first
+                            }
+                        }
+
+                        new window.IntaSend({
+                            publicAPIKey: "'.$this->public_key.'",
+                            live: '. ($this->testmode ? 'false' : 'true') .'
+                        })
+                        .on("COMPLETE", (results) => {
+                            console.log(results)
+                            window.location.href = `'.$redirect_url.'&tracking_id=${results.tracking_id}`;
+                        })
+                        .on("FAILED", (results) => {
+                            console.log("Do something on failure", results);
+                        })
+                        .on("IN-PROGRESS", (results) => {
+                            console.log("Payment in progress status", results);
+                        });
+
+                        const firstButton = document.querySelector(".intaSendPayButton");
+                        if (firstButton) {
+                            firstButton.click();
+                        }
+
+                        // jQuery(document).ready(function ($) {
+                        //     const buttons = $(".intaSendPayButton");
+                        //     if (buttons.length > 1) {
+                        //         buttons.slice(1).remove(); // Keep only the first button
+                        //     }
+                        //     buttons.first().click();
+                        // });
+
+                    })
+                </script>';
             }
 
             public function complete_callback()
@@ -333,14 +441,14 @@ function intasend_init_gateway_class()
                     wc_add_notice('Problems experienced while confirming your order. Error details: Missing tracking id. Please share with support for assistance.', 'error');
                     return;
                 }
-                if (empty($signature)) {
-                    wc_add_notice('Problems experienced while confirming your order. Error details: Missing signature. Please share with support for assistance.', 'error');
-                    return;
-                }
-                if (empty($checkout_id)) {
-                    wc_add_notice('Problems experienced while confirming your order. Error details: Missing checkout id. Please share with support for assistance.', 'error');
-                    return;
-                }
+                // if (empty($signature)) {
+                //     wc_add_notice('Problems experienced while confirming your order. Error details: Missing signature. Please share with support for assistance.', 'error');
+                //     return;
+                // }
+                // if (empty($checkout_id)) {
+                //     wc_add_notice('Problems experienced while confirming your order. Error details: Missing checkout id. Please share with support for assistance.', 'error');
+                //     return;
+                // }
 
 
                 $order = wc_get_order($ref_id);
@@ -355,8 +463,9 @@ function intasend_init_gateway_class()
                 $url = $intasend_base_url . "/api/v1/payment/status/";
                 $args = array(
                     'invoice_id' => $tracking_id,
-                    'signature' => $signature,
-                    'checkout_id' => $checkout_id
+                    'public_key' => $this->public_key,
+                    // 'signature' => $signature,
+                    // 'checkout_id' => $checkout_id
                 );
 
                 $response = wp_remote_post($url, array(
@@ -527,6 +636,6 @@ function intasend_init_gateway_class()
                     echo "Connection error experienced while validating your payment. Please contact support.";
                     die();
                 }
-            }
+            }   
         }
 }

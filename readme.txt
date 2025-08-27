@@ -5,7 +5,7 @@ Tags: Payments,Checkout,Visa,Mastercard,M-Pesa,Payment Gateway
 Requires at least: 4.8
 Tested up to: 6.5.5
 Requires PHP: 7.4
-Stable tag: 1.0.`0
+Stable tag: 1.0.15
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -75,3 +75,18 @@ PHP 8.2 Support
 
 = 1.0.11 = 
 Dynamic properties support
+
+= 1.0.14 = 
+Woocommerce remote logging and HPOS support
+
+= 1.0.16 = 
+On site checkout
+
+= 1.0.18 = 
+Multiple buttons fix
+
+= 1.0.19 = 
+DOM error fix
+
+= 1.0.20 = 
+Redirect and Pop option

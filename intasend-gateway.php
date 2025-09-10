@@ -6,13 +6,13 @@
  * Author Name: Felix Cheruiyot, Mugendi Gitonga (IntaSend Support)
  * Author URI: https://github.com/intasend
  * Description: Collect Mobile and card payments payments using IntaSend Payment Gateway from your WooCommerce store
- * Version: 1.0.19
+ * Version: 1.0.20
  * Requires Plugins: woocommerce
  * Requires at least: 6.0
- * Tested up to: 6.7.1
+ * Tested up to: 6.8.2 
  * Requires PHP: 7.4
  * WC requires at least: 8.0
- * WC tested up to: 9.4.3
+ * WC tested up to: 10.1.1
  * WC High-Performance Order Storage: yes
  */
 
